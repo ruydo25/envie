@@ -715,7 +715,8 @@ function hideManual(){const m=$('#loc-manual');if(m)m.hidden=true;}
 function setLocation(lat,lon,label){
   LOC={lat,lon,label:label||'Ma position'};storeLoc();ALL=null;loadedRadius=0;renderLoc();hideManual();
   const k=pendingKey;pendingKey=null;
-  if(k)openResults(k);else toast('📍 '+LOC.label);
+  if(k){openResults(k);}
+  else{toast('📍 '+LOC.label);ensurePlaces().catch(()=>{});} // précharge en arrière-plan
 }
 function askLocation(){
   if(!navigator.geolocation){showManual();toast('Géoloc indisponible — tape ta ville');return;}
@@ -775,21 +776,31 @@ function parseEl(el){
     dist:haversine(LOC.lat,LOC.lon,lat,lon),bearing:bearingDeg(LOC.lat,LOC.lon,lat,lon)};
   p.price=priceEstimate(p);p.em=placeEmoji(p);return p;
 }
+async function fetchOne(ep,q){
+  const res=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  return res.json();
+}
 async function fetchPlaces(R){
   const q=`[out:json][timeout:25];(nwr["amenity"~"^(restaurant|fast_food|cafe|ice_cream)$"](around:${R},${LOC.lat},${LOC.lon}););out center tags;`;
-  let data=null,err=null;
-  for(const ep of OVERPASS){
-    try{
-      const res=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)});
-      if(!res.ok)throw new Error('HTTP '+res.status);
-      data=await res.json();break;
-    }catch(e){err=e;}
-  }
-  if(!data)throw err||new Error('réseau');
+  let data;
+  try{ data=await Promise.any(OVERPASS.map(ep=>fetchOne(ep,q))); } // on garde le serveur le plus rapide
+  catch(e){ throw new Error('réseau'); }
   ALL=(data.elements||[]).map(parseEl).filter(Boolean);
   loadedRadius=R;
+  cacheStore(R);
 }
-async function ensurePlaces(){if(ALL&&loadedRadius>=neededRadius())return;await fetchPlaces(neededRadius());}
+/* mémoire courte (30 min) pour un rechargement instantané */
+function cacheKey(R){return `envie_cache_${LOC.lat.toFixed(3)}_${LOC.lon.toFixed(3)}_${R}`;}
+function cacheStore(R){try{localStorage.setItem(cacheKey(R),JSON.stringify({t:Date.now(),els:ALL}));}catch(e){}}
+function cacheLoad(R){try{const c=JSON.parse(localStorage.getItem(cacheKey(R)));if(c&&Array.isArray(c.els)&&Date.now()-c.t<1800000)return c.els;}catch(e){}return null;}
+async function ensurePlaces(){
+  if(ALL&&loadedRadius>=neededRadius())return;
+  const R=neededRadius();
+  const cached=cacheLoad(R);
+  if(cached){ALL=cached;loadedRadius=R;return;}
+  await fetchPlaces(R);
+}
 
 /* ---------- accueil ---------- */
 function renderHome(){
@@ -987,6 +998,7 @@ const li=$('#loc-input');if(li)li.addEventListener('keydown',e=>{if(e.key==='Ent
 /* ---------- init ---------- */
 renderHome();renderInvite();updateGreeting();renderLoc();
 if(!LOC)showManual();
+else ensurePlaces().catch(()=>{}); // précharge dès l'ouverture si position connue
 
 </script>
 </body>
