@@ -756,7 +756,7 @@
         </div>
 
 
-        <p class="nudge">🔒 Reste sur ton téléphone — rien n'est envoyé (démo).</p>
+        <p class="nudge">🔒 Reste sur ton téléphone — rien n'est envoyé.</p>
         <div class="legal-link"><a href="https://envie-kappa.vercel.app/mentions-legales.html" target="_blank" rel="noopener">Mentions légales · Confidentialité</a></div>
       </div></div>
       <div class="cta-bar">
@@ -802,8 +802,8 @@
 </div>
 
 <div class="foot">
-  <b>Envie</b> — prototype cliquable. Choisis une envie sur l'accueil pour voir le parcours complet.<br>
-  Les restaurants et distances sont fictifs, le temps d'une démo.
+  <b>Envie</b> — le resto qui répond à ton envie, autour de toi.<br>
+  Données restaurants © Google · fond de carte © OpenStreetMap.
   <div class="tog" id="themetog">
     <button data-t="light">Clair</button>
     <button data-t="dark">Sombre</button>
@@ -1049,7 +1049,7 @@ async function openResults(key){
   if(!LOC){pendingKey=key;showManual();toast('Active ta position pour chercher autour de toi');return;}
   const cui=CUISINES.find(x=>x.key===key);
   go('results');$('#v-results .view').scrollTop=0;
-  $('#res-title').innerHTML=`${cui.em} ${cui.nm}`;
+  $('#res-title').innerHTML=`${cui.em} ${escapeHtml(cui.nm)}`;
   if(CACHE[key]){renderResults(key);return;}
   $('#res-count').textContent='Recherche en cours…';$('#res-adapt').innerHTML='';
   $('#res-list').innerHTML=`<div class="empty">Recherche des ${escapeHtml(cui.nm.toLowerCase())} autour de toi…</div>`;
@@ -1088,7 +1088,7 @@ async function surprise(){
 function renderResults(key){
   const cui=CUISINES.find(x=>x.key===key);
   const allcuis=(CACHE[key]||[]).slice().sort((a,b)=>a.dist-b.dist);
-  $('#res-title').innerHTML=`${cui.em} ${cui.nm}`;
+  $('#res-title').innerHTML=`${cui.em} ${escapeHtml(cui.nm)}`;
   if(allcuis.length===0){
     $('#res-count').textContent='Rien trouvé pour cette envie';
     $('#res-list').innerHTML=`<div class="empty">Aucun « ${escapeHtml(cui.nm)} » trouvé autour de toi.<br>Essaie une autre envie ou agrandis la distance dans ton profil.</div>`;
