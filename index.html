@@ -601,7 +601,7 @@
 <body>
 <div class="device">
   <div class="screen">
-    <div class="demo"><b></b> Vraies données · Google · v18</div>
+    <div class="demo"><b></b> Vraies données · Google · v19</div>
 
     <!-- ========== HOME ========== -->
     <section class="screenview active" id="v-home">
@@ -851,6 +851,8 @@ function walkMinN(m){return Math.max(1,Math.round(m/78));}
 function walkMin(m){return walkMinN(m)+' min à pied';}
 function driveMinN(m){return Math.max(1,Math.round(m/450));}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+// mesure anonyme (Vercel Web Analytics) — aucune donnée perso, sans cookie
+function trackEv(n,p){try{if(window.va)window.va('event',n,p||{});}catch(e){}}
 function haversine(lat1,lon1,lat2,lon2){const R=6371000,toR=x=>x*Math.PI/180;const dLa=toR(lat2-lat1),dLo=toR(lon2-lon1);const a=Math.sin(dLa/2)**2+Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLo/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(a)));}
 function bearingDeg(lat1,lon1,lat2,lon2){const toR=x=>x*Math.PI/180;const y=Math.sin(toR(lon2-lon1))*Math.cos(toR(lat2));const x=Math.cos(toR(lat1))*Math.sin(toR(lat2))-Math.sin(toR(lat1))*Math.cos(toR(lat2))*Math.cos(toR(lon2-lon1));return (Math.atan2(y,x)*180/Math.PI+360)%360;}
 function shade(hex,amt){const n=parseInt(hex.slice(1),16);let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));return '#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0');}
@@ -1048,6 +1050,7 @@ async function openResults(key){
   const se=$('#search'); if(se)se.value='';const ce=$('#clearbtn'); if(ce)ce.classList.remove('show');const sg=$('#suggest'); if(sg)sg.classList.remove('show');
   if(!LOC){pendingKey=key;showManual();toast('Active ta position pour chercher autour de toi');return;}
   const cui=CUISINES.find(x=>x.key===key);
+  trackEv('Recherche',{envie:cui?cui.nm:key});
   go('results');$('#v-results .view').scrollTop=0;
   $('#res-title').innerHTML=`${cui.em} ${escapeHtml(cui.nm)}`;
   if(CACHE[key]){renderResults(key);return;}
@@ -1079,6 +1082,7 @@ async function surprise(){
   const pool=CUISINES.filter(c=>c.key.indexOf('q:')!==0);
   if(!pool.length)return;
   const c=pool[Math.floor(Math.random()*pool.length)];
+  trackEv('Surprise');
   toast(`🎲 Ce soir → ${c.em} ${c.nm} !`);
   await openResults(c.key);
   const list=(CACHE[c.key]||[]).slice().sort((a,b)=>a.dist-b.dist);
@@ -1173,7 +1177,7 @@ function loadFavs(){try{const a=JSON.parse(localStorage.getItem('envie_favs'));r
 function storeFavs(){try{localStorage.setItem('envie_favs',JSON.stringify(FAVS));}catch(e){}}
 let FAVS=loadFavs();
 function isFav(id){return FAVS.some(f=>f.id===id);}
-function toggleFav(p){const i=FAVS.findIndex(f=>f.id===p.id);if(i>=0)FAVS.splice(i,1);else FAVS.unshift(p);storeFavs();}
+function toggleFav(p){const i=FAVS.findIndex(f=>f.id===p.id);if(i>=0)FAVS.splice(i,1);else{FAVS.unshift(p);trackEv('Favori');}storeFavs();}
 function openFavorites(){renderFavorites();go('favorites');}
 function renderFavorites(){
   const el=$('#fav-list'), cnt=$('#fav-count'); if(!el)return;
@@ -1241,7 +1245,7 @@ function openDetail(id){
       ${p.addr?infoRow('pin',`<b>Adresse</b><span>${escapeHtml(p.addr)}</span>`):''}
     </div>
     <p class="nudge">Données Google · les infos détaillées se chargent à l'ouverture.</p>`;
-  $('#d-go').onclick=()=>{hideGoHint();window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&destination_place_id=${p.id}`,'_blank');};
+  $('#d-go').onclick=()=>{hideGoHint();trackEv('Itineraire');window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&destination_place_id=${p.id}`,'_blank');};
   $('#d-call').onclick=()=>toast('Numéro en cours de chargement…');
   go('detail');$('.dsheet').scrollTop=0;
   maybeShowGoHint();
@@ -1272,6 +1276,7 @@ function shareResto(){
   const p=curPlace;
   const url=location.origin+location.pathname+'?r='+encodeURIComponent(p.id);
   const text=`${p.em} ${p.name} — ${fmtDist(p.dist)} · trouvé sur Envie`;
+  trackEv('Partage');
   if(navigator.share){ navigator.share({title:p.name,text,url}).catch(()=>{}); }
   else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>toast('Lien copié 📋')).catch(()=>toast('Copie impossible')); }
   else toast('Partage indisponible ici');
@@ -1491,5 +1496,8 @@ renderHome();renderInvite();updateGreeting();renderLast();renderLoc();setOpenFil
 
 </script>
 <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
+<!-- Vercel Web Analytics : mesure anonyme, sans cookie, sans donnée personnelle -->
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
