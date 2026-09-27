@@ -597,6 +597,11 @@
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
 </head>
 <body>
 <div class="device">
@@ -1496,8 +1501,5 @@ renderHome();renderInvite();updateGreeting();renderLast();renderLoc();setOpenFil
 
 </script>
 <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
-<!-- Vercel Web Analytics : mesure anonyme, sans cookie, sans donnée personnelle -->
-<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
-<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

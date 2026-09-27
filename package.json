@@ -1,0 +1,13 @@
+{
+  "name": "envie",
+  "version": "1.0.0",
+  "description": "Trouve le restaurant le plus proche qui sert l'envie du moment, adapté à ton budget.",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build step required'"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
