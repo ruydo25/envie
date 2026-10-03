@@ -601,7 +601,7 @@
 <body>
 <div class="device">
   <div class="screen">
-    <div class="demo"><b></b> Vraies données · Google · v19</div>
+    <div class="demo"><b></b> Vraies données · Google · v20</div>
 
     <!-- ========== HOME ========== -->
     <section class="screenview active" id="v-home">
@@ -924,7 +924,7 @@ async function geocodeInput(){
   const q=($('#loc-input').value||'').trim();if(!q)return;
   toast('Recherche du lieu…');
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=fr&q=${encodeURIComponent(q)}`);
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=fr&countrycodes=fr&q=${encodeURIComponent(q)}`);
     const d=await r.json();
     if(!d.length){toast('Lieu introuvable, précise davantage');return;}
     setLocation(parseFloat(d[0].lat),parseFloat(d[0].lon),(d[0].display_name||q).split(',')[0]);
