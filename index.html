@@ -601,7 +601,7 @@
 <body>
 <div class="device">
   <div class="screen">
-    <div class="demo"><b></b> Vraies données · Google · v21</div>
+    <div class="demo"><b></b> Vraies données · Google · v22</div>
 
     <!-- ========== HOME ========== -->
     <section class="screenview active" id="v-home">
@@ -1400,11 +1400,50 @@ function go(name){
 /* ---------- recherche ---------- */
 const searchEl=$('#search'), sugEl=$('#suggest'), clearEl=$('#clearbtn');
 function firstHit(q){return CUISINES.find(c=>c.nm.toLowerCase().includes(q)||c.full.toLowerCase().includes(q)||c.key.includes(q)||(c.q&&c.q.includes(q)));}
-// recherche ouverte : tout terme non listé -> recherche Google directe sur ce mot
+// ---- dictionnaire plat -> cuisine : rend la recherche libre plus précise ----
+// (Google ne connaît pas les menus : on traduit un plat en type de cuisine qu'il gère bien)
+function normTxt(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
+const DISH_MAP=[
+  {k:['raclette','fondue','tartiflette','croziflette','rosti','roesti','mont d or','croute au fromage'], q:'restaurant savoyard raclette fondue tartiflette', full:'Savoyard', em:'🧀'},
+  {k:['flammekueche','flamm','tarte flambee','baeckeoffe','baeckeofe','choucroute','spaetzle','spatzle','fleischnacka'], q:'restaurant alsacien flammekueche choucroute', full:'Alsacien', em:'🥨'},
+  {k:['couscous','tajine','tagine','pastilla','merguez'], q:'restaurant couscous tajine maghrebin', full:'Maghrébin', em:'🥘'},
+  {k:['mezze','falafel','chawarma','shawarma','houmous','taboule','kebbe','libanais'], q:'restaurant libanais mezze falafel', full:'Libanais', em:'🧆'},
+  {k:['gyros','souvlaki','tzatziki','moussaka'], q:'restaurant grec gyros', full:'Grec', em:'🥙'},
+  {k:['paella','tapas','chorizo','tortilla espagnole'], q:'restaurant espagnol paella tapas', full:'Espagnol', em:'🥘'},
+  {k:['sushi','maki','sashimi','chirashi','yakitori','teppanyaki','poke'], q:'restaurant japonais sushi', full:'Japonais', em:'🍣'},
+  {k:['ramen','udon','gyoza'], q:'restaurant japonais ramen', full:'Japonais', em:'🍜'},
+  {k:['pho','bo bun','bobun','nem','nems','banh mi'], q:'restaurant vietnamien pho bobun', full:'Vietnamien', em:'🍜'},
+  {k:['pad thai','padthai','curry vert','tom yum','wok'], q:'restaurant thai pad thai', full:'Thaï', em:'🍤'},
+  {k:['canard laque','dim sum','bao','raviolis vapeur','riz cantonais','nouilles sautees'], q:'restaurant chinois', full:'Chinois', em:'🥡'},
+  {k:['bibimbap','bulgogi','kimchi','bibim'], q:'restaurant coreen', full:'Coréen', em:'🍲'},
+  {k:['curry','tikka','naan','biryani','tandoori','masala'], q:'restaurant indien curry', full:'Indien', em:'🍛'},
+  {k:['pates','pate ','pasta','lasagne','lasagnes','risotto','gnocchi','carbonara','tiramisu'], q:'restaurant italien pates', full:'Italien', em:'🍝'},
+  {k:['pizza','calzone','pizzeria'], q:'pizzeria pizza', full:'Italien', em:'🍕'},
+  {k:['burger','cheeseburger','hamburger','smash'], q:'restaurant burger', full:'Burger', em:'🍔'},
+  {k:['tacos','burrito','quesadilla','fajitas','enchilada','nachos'], q:'tacos mexicain', full:'Tex-Mex', em:'🌮'},
+  {k:['kebab','durum','duerum'], q:'kebab durum', full:'Kebab', em:'🌯'},
+  {k:['hot dog','hotdog'], q:'restaurant hot dog americain', full:'Américain', em:'🌭'},
+  {k:['frite','frites','friterie'], q:'friterie frites', full:'Friterie', em:'🍟'},
+  {k:['entrecote','steak','cote de boeuf','barbecue','ribs','brochette','grillade','grill','viande'], q:'grill steakhouse viande', full:'Grill', em:'🥩'},
+  {k:['poulet roti','rotisserie','poulet'], q:'rotisserie poulet roti', full:'Rôtisserie', em:'🍗'},
+  {k:['moules','fruits de mer','huitre','huitres','saumon','fish and chips','crevette','poisson'], q:'restaurant poisson fruits de mer', full:'Poisson', em:'🦐'},
+  {k:['crepe','crepes','galette','galettes'], q:'creperie crepes galettes', full:'Crêperie', em:'🥞'},
+  {k:['brunch','pancake','pancakes','avocado toast','oeuf benedicte'], q:'brunch cafe', full:'Brunch', em:'🍳'},
+  {k:['poke bowl','buddha bowl','salade','healthy','detox'], q:'restaurant salade healthy bowl', full:'Healthy', em:'🥗'},
+  {k:['vegan','vegetarien','vegetalien','vege'], q:'restaurant vegetarien vegan', full:'Végé', em:'🥗'},
+  {k:['glace','glaces','sorbet','glacier','gelato'], q:'glacier glaces', full:'Glaces', em:'🍨'},
+  {k:['sandwich','panini','croque','bagel','wrap'], q:'sandwicherie snack', full:'Snack', em:'🥖'},
+];
+function dishMatch(term){const t=normTxt(term); for(const d of DISH_MAP){ if(d.k.some(k=>t.includes(k))) return d; } return null;}
+
+// recherche ouverte : tout terme non listé -> recherche Google (via le dico plat->cuisine si possible)
 function searchFree(term){
   term=(term||'').trim();if(!term)return;
   const key='q:'+term.toLowerCase();
-  if(!CUISINES.find(x=>x.key===key))CUISINES.push({key,em:'🔎',nm:term,full:'Recherche',q:term,gtype:'restaurant'});
+  if(!CUISINES.find(x=>x.key===key)){
+    const d=dishMatch(term);
+    CUISINES.push({key, em:d?d.em:'🔎', nm:term, full:d?d.full:'Recherche', q:d?d.q:term, gtype:'restaurant'});
+  }
   const sg=$('#suggest');if(sg)sg.classList.remove('show');
   const se=$('#search');if(se)se.blur();
   openResults(key);
