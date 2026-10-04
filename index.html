@@ -601,7 +601,7 @@
 <body>
 <div class="device">
   <div class="screen">
-    <div class="demo"><b></b> Vraies données · Google · v20</div>
+    <div class="demo"><b></b> Vraies données · Google · v21</div>
 
     <!-- ========== HOME ========== -->
     <section class="screenview active" id="v-home">
@@ -1017,7 +1017,34 @@ function renderInvite(){
     el.innerHTML=`<div class="invite" onclick="openProfile()"><div class="ei"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.3 4.7 5.2.8-3.8 3.6.9 5.1L12 15.8 7.4 17.2l.9-5.1L4.5 8.5l5.2-.8z"/></svg></div><div class="et"><b>Dis-nous ton budget</b><span>On te montre d'abord les restos faits pour toi</span></div><span class="ea">→</span></div>`;
   }
 }
-function updateGreeting(){const h=$('#hello');if(h)h.innerHTML=profile.name?`Alors ${escapeHtml(profile.name)}, tu veux <em>manger quoi</em>&nbsp;?`:`Alors, tu veux <em>manger quoi</em>&nbsp;?`;}
+// ---- accueil qui "te parle" : phrase selon l'heure + un peu de hasard + ton prénom ----
+const GREETINGS={
+  morning:[ n=>n?`Bien réveillé, ${n} ? On mange <em>quoi</em>&nbsp;?`:`Bien réveillé·e ? On mange <em>quoi</em>&nbsp;?`,
+            n=>`Petit creux <em>matinal</em>&nbsp;?`,
+            n=>n?`Alors ${n}, ça sera quoi ce <em>matin</em>&nbsp;?`:`Ça sera quoi ce <em>matin</em>&nbsp;?` ],
+  noon:[    n=>`Il est l'heure&nbsp;! Tu manges <em>quoi</em>&nbsp;?`,
+            n=>n?`Pause déj', ${n} — une <em>envie</em>&nbsp;?`:`Pause déj' — une <em>envie</em>&nbsp;?`,
+            n=>`Midi pile. On mange <em>quoi</em>&nbsp;?` ],
+  afternoon:[ n=>`Petit creux de l'<em>aprèm</em>&nbsp;?`,
+            n=>`Une envie de <em>grignoter</em>&nbsp;?`,
+            n=>n?`Alors ${n}, on se fait <em>quoi</em>&nbsp;?`:`On se fait <em>quoi</em>&nbsp;?` ],
+  evening:[ n=>n?`Alors ${n}, on mange <em>quoi</em> ce soir&nbsp;?`:`Alors, on mange <em>quoi</em> ce soir&nbsp;?`,
+            n=>`Ce soir, ça sera <em>quoi</em>&nbsp;?`,
+            n=>`L'heure de se <em>régaler</em>. Une envie&nbsp;?` ],
+  night:[   n=>`Un petit creux <em>nocturne</em>&nbsp;? 🌙`,
+            n=>`Faim à cette <em>heure-ci</em>&nbsp;? 😏`,
+            n=>n?`Craquage de <em>minuit</em>, ${n}&nbsp;? 🌙`:`Craquage de <em>minuit</em>&nbsp;? 🌙` ],
+};
+function updateGreeting(){
+  const h=$('#hello'); if(!h)return;
+  const n=profile.name?escapeHtml(profile.name):'';
+  const hr=new Date().getHours();
+  let slot='evening';
+  if(hr>=5&&hr<11)slot='morning'; else if(hr>=11&&hr<14)slot='noon';
+  else if(hr>=14&&hr<18)slot='afternoon'; else if(hr>=18&&hr<23)slot='evening'; else slot='night';
+  const list=GREETINGS[slot];
+  h.innerHTML=list[Math.floor(Math.random()*list.length)](n);
+}
 function renderLast(){
   const el=$('#last'); if(!el)return;
   let k=null; try{k=localStorage.getItem('envie_last');}catch(e){}
