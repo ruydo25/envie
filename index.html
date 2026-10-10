@@ -381,7 +381,10 @@
   .thumb{
     width:66px;flex:0 0 66px;border-radius:14px;display:grid;place-items:center;font-size:30px;
     background:var(--surface-2);border:1px solid var(--line-2);
+    position:relative;overflow:hidden;
   }
+  .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .thumb.hasimg{border-color:transparent}
   .card .body{flex:1;min-width:0;display:flex;flex-direction:column}
   .card .nm{font-weight:800;font-size:15.5px;letter-spacing:-.01em;display:flex;align-items:center;gap:7px}
   .card .tags{color:var(--ink-2);font-size:12px;font-weight:600;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -406,6 +409,7 @@
     display:grid;place-items:center;color:#fff;overflow:hidden;
   }
   .hero .big{font-size:74px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.28))}
+  .hero-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
   .hero .backwrap{position:absolute;top:12px;left:14px;z-index:3}
   .hero .likewrap{position:absolute;top:12px;right:14px;z-index:3}
   .hero .sharewrap{position:absolute;top:12px;right:60px;z-index:3}
@@ -601,7 +605,7 @@
 <body>
 <div class="device">
   <div class="screen">
-    <div class="demo"><b></b> Vraies données · Google · v22</div>
+    <div class="demo"><b></b> Vraies données · Google · v23</div>
 
     <!-- ========== HOME ========== -->
     <section class="screenview active" id="v-home">
@@ -698,6 +702,7 @@
     <!-- ========== DETAIL ========== -->
     <section class="screenview" id="v-detail">
       <div class="hero" id="d-hero">
+        <img class="hero-photo" id="d-photo" alt="" hidden>
         <div class="hero-fade"></div>
         <div class="backwrap"><button class="iconbtn" onclick="go('results')" aria-label="Retour">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -990,7 +995,9 @@ function mapPlace(r,cui){
     priceLevel:(typeof r.price_level==='number'?r.price_level:null),
     price:priceFromLevel(r.price_level),
     openNow:(r.opening_hours&&typeof r.opening_hours.open_now==='boolean')?r.opening_hours.open_now:null,
-    addr:r.vicinity||r.formatted_address||'', em:cui.em, cat:cui.key
+    addr:r.vicinity||r.formatted_address||'', em:cui.em, cat:cui.key,
+    photo:(r.photos&&r.photos.length)?r.photos[0].getUrl({maxWidth:240,maxHeight:240}):null,
+    photoBig:(r.photos&&r.photos.length)?r.photos[0].getUrl({maxWidth:900,maxHeight:640}):null
   };
 }
 function getDetails(id){
@@ -1161,7 +1168,7 @@ function priceTag(p){
 }
 function cardHTML(p){
   return `<div class="card" onclick="openDetail('${p.id}')">
-    <div class="thumb">${p.em}</div>
+    <div class="thumb${p.photo?' hasimg':''}">${p.photo?`<img src="${p.photo}" alt="" loading="lazy" onerror="var t=this.closest('.thumb');if(t)t.classList.remove('hasimg');this.remove();">`:''}<span class="thumb-em">${p.em}</span></div>
     <div class="body">
       <div class="nm">${escapeHtml(p.name)}</div>
       <div class="meta">
@@ -1247,7 +1254,12 @@ function openDetail(id){
   const gsearch='https://www.google.com/search?q='+encodeURIComponent('menu '+p.name+' '+(LOC?LOC.label:''));
   const hero=CAT_COL[p.cat]||'#B8351F';
   $('#d-hero').style.background=`linear-gradient(150deg,${hero},${shade(hero,-22)})`;
-  $('#d-emoji').textContent=p.em;updateLike();
+  $('#d-emoji').textContent=p.em;
+  (function(){const ph=$('#d-photo'),em=$('#d-emoji');
+    if(p.photoBig){ph.onerror=function(){ph.hidden=true;em.style.display='';};ph.src=p.photoBig;ph.hidden=false;em.style.display='none';}
+    else{ph.hidden=true;ph.removeAttribute('src');em.style.display='';}
+  })();
+  updateLike();
   const est=`<span style="font-size:11px;color:var(--ink-3s);font-weight:700">estimé</span>`;
   const openTxt=p.openNow==null?'':(p.openNow?`<span class="now-open">Ouvert maintenant</span>`:`<span class="now-closed">Fermé maintenant</span>`);
   $('#d-body').innerHTML=`
