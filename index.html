@@ -395,7 +395,8 @@
   .dot-sep{width:3px;height:3px;border-radius:50%;background:var(--ink-3s)}
   .price{font-weight:700;color:var(--ink-2);font-family:"DM Mono",monospace;font-size:12px}
   .dist-col{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;flex:0 0 auto;padding-left:2px}
-  .dist{font-family:"DM Mono",monospace;font-weight:500;font-size:16px;color:var(--accent);line-height:1}
+  .dist{font-family:"DM Mono",monospace;font-weight:500;font-size:16px;color:var(--ink);line-height:1}
+  .card.near .dist{color:var(--accent);font-weight:600}
   .walk{font-size:11px;color:var(--ink-3s);font-weight:600;margin-top:3px;white-space:nowrap}
   .pill{
     align-self:flex-end;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;letter-spacing:.02em;
@@ -605,7 +606,7 @@
 <body>
 <div class="device">
   <div class="screen">
-    <div class="demo"><b></b> Vraies données · Google · v23</div>
+    <div class="demo"><b></b> Vraies données · Google · v24</div>
 
     <!-- ========== HOME ========== -->
     <section class="screenview active" id="v-home">
@@ -1150,6 +1151,7 @@ function renderResults(key){
   $('#radar-count').textContent=shown.length;
   $('#radar-near').textContent=shown.length?fmtDist(shown[0].dist):'—';
   $('#res-list').innerHTML=shown.map(cardHTML).join('');
+  const nearCard=document.querySelector('#res-list .card'); if(nearCard)nearCard.classList.add('near');
   drawRadar(shown,maxD);
   const el=$('#res-adapt');
   if(!profileSet()){el.innerHTML='';return;}
